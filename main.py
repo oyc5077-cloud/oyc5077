@@ -1,14 +1,15 @@
 import os
 import requests
-from google import genai
+import google.generativeai as genai
 
 # 환경변수에서 키 가져오기
 telegram_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 gemini_key = os.getenv("GEMINI_API_KEY")
 
-# 최신 SDK 방식으로 client 생성
-client = genai.Client(api_key=gemini_key)
+# Gemini AI 설정
+genai.configure(api_key=gemini_key)
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 def send_telegram_msg(message):
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
@@ -27,11 +28,6 @@ prompt = """
 - 특징: 같은 날짜 동시 특가 매칭 완료
 """
 
-# 최신 2.5 모델 및 호환 호출 방식 사용
-response = client.models.generate_content(
-    model='gemini-2.5-flash',
-    contents=prompt,
-)
-
+response = model.generate_content(prompt)
 send_telegram_msg(response.text)
 print("텔레그램 알림 발송 완료!")
