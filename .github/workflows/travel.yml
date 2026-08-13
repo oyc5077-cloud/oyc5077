@@ -1,5 +1,4 @@
 name: Travel AI Agent
-name: Travel AI Agent
 
 on:
   schedule:
@@ -21,33 +20,6 @@ jobs:
       - name: Install dependencies
         run: |
           pip install google-generativeai requests
-
-      - name: Run AI Agent
-        env:
-          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python main.py
-on:
-  schedule:
-    - cron: '0 0 * * *'  # 매일 24시간 자동 실행
-  workflow_dispatch:       # 수동 바로 실행
-
-jobs:
-  run-agent:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
-        run: |
-          pip install google-genai requests
 
       - name: Run AI Agent
         env:
