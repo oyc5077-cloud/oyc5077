@@ -2,7 +2,7 @@ import os
 import requests
 from google import genai
 
-# 환경변수 확인
+# 1. 환경변수 확인
 telegram_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 gemini_key = os.getenv("GEMINI_API_KEY")
@@ -13,8 +13,9 @@ print(f"TELEGRAM_CHAT_ID 존재 여부: {bool(chat_id)}")
 print(f"GEMINI_API_KEY 존재 여부: {bool(gemini_key)}")
 
 try:
-    # Google GenAI Client 초기화
+    # 2. 최신 SDK Client 생성 및 Chat 세션 활용
     client = genai.Client(api_key=gemini_key)
+    chat = client.chats.create(model="gemini-2.0-flash")
 
     prompt = """
     너는 초특가 항공권과 호텔을 동시에 감지하는 최고의 AI 여행 비서야.
@@ -28,13 +29,10 @@ try:
     """
 
     print("\n--- [Gemini AI 응답 생성 중...] ---")
-    response = client.models.generate_content(
-        model='gemini-2.5-flash',
-        contents=prompt
-    )
+    response = chat.send_message(prompt)
     print("AI 응답 생성 성공!")
 
-    # 텔레그램 발송
+    # 3. 텔레그램 메시지 전송
     print("\n--- [텔레그램 메시지 발송 중...] ---")
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
     data = {"chat_id": chat_id, "text": response.text, "parse_mode": "Markdown"}
