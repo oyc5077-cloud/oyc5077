@@ -1,8 +1,8 @@
 import os
 import requests
-import google.generativeai as genai
+from google import genai
 
-# 1. 환경변수 확인
+# 환경변수 확인
 telegram_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 gemini_key = os.getenv("GEMINI_API_KEY")
@@ -13,9 +13,8 @@ print(f"TELEGRAM_CHAT_ID 존재 여부: {bool(chat_id)}")
 print(f"GEMINI_API_KEY 존재 여부: {bool(gemini_key)}")
 
 try:
-    # 2. Gemini AI 설정 및 실행
-    genai.configure(api_key=gemini_key)
-    model = genai.GenerativeModel('gemini-2.0-flash')
+    # Google GenAI Client 초기화
+    client = genai.Client(api_key=gemini_key)
 
     prompt = """
     너는 초특가 항공권과 호텔을 동시에 감지하는 최고의 AI 여행 비서야.
@@ -29,15 +28,18 @@ try:
     """
 
     print("\n--- [Gemini AI 응답 생성 중...] ---")
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=prompt
+    )
     print("AI 응답 생성 성공!")
 
-    # 3. 텔레그램 전송
+    # 텔레그램 발송
     print("\n--- [텔레그램 메시지 발송 중...] ---")
     url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
     data = {"chat_id": chat_id, "text": response.text, "parse_mode": "Markdown"}
     res = requests.post(url, data=data)
-    
+
     if res.status_code == 200:
         print("🎉 텔레그램 알림 발송 최종 성공!")
     else:
@@ -46,6 +48,3 @@ try:
 except Exception as e:
     print(f"\n❌ 실행 중 오류 발생: {e}")
     raise e
-response = model.generate_content(prompt)
-send_telegram_msg(response.text)
-print("텔레그램 알림 발송 완료!")
