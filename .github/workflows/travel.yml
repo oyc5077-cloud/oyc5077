@@ -3,7 +3,7 @@ name: Travel AI Agent
 on:
   schedule:
     - cron: '0 0 * * *'  # 매일 24시간 자동 실행
-  workflow_dispatch:       # 수동 바로 실행
+  workflow_dispatch:       # 수동 테스트 실행
 
 jobs:
   run-agent:
@@ -15,11 +15,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'  # 권장 최신 파이썬 버전 적용
 
       - name: Install dependencies
         run: |
-          pip install google-generativeai requests
+          pip install google-genai requests
 
       - name: Run AI Agent
         env:
