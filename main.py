@@ -1,22 +1,21 @@
 import os
 import requests
-from google import genai
 
-# 1. 환경변수 확인
+# 1. 환경변수 가져오기
 telegram_token = os.getenv("TELEGRAM_TOKEN")
 chat_id = os.getenv("TELEGRAM_CHAT_ID")
 gemini_key = os.getenv("GEMINI_API_KEY")
 
-print("--- [환경변수 점검] ---")
-print(f"TELEGRAM_TOKEN 존재 여부: {bool(telegram_token)}")
-print(f"TELEGRAM_CHAT_ID 존재 여부: {bool(chat_id)}")
-print(f"GEMINI_API_KEY 존재 여부: {bool(gemini_key)}")
+print("--- [1. 환경변수 점검] ---")
+print(f"TELEGRAM_TOKEN: {bool(telegram_token)}")
+print(f"TELEGRAM_CHAT_ID: {bool(chat_id)}")
+print(f"GEMINI_API_KEY: {bool(gemini_key)}")
 
 try:
-    # 2. 최신 SDK Client 생성 및 Chat 세션 활용
-    client = genai.Client(api_key=gemini_key)
-    chat = client.chats.create(model="gemini-2.0-flash")
-
+    # 2. Gemini 최신 REST API 호출 (SDK 파편화 영향 없음)
+    print("\n--- [2. Gemini AI 응답 요청 중...] ---")
+    gemini_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={gemini_key}"
+    
     prompt = """
     너는 초특가 항공권과 호텔을 동시에 감지하는 최고의 AI 여행 비서야.
     사용자를 위해 항공권과 5성급 호텔이 같은 날짜에 동시 초특가로 나온 가상의 리포트를 작성해줘.
@@ -28,21 +27,36 @@ try:
     - 특징: 같은 날짜 동시 특가 매칭 완료
     """
 
-    print("\n--- [Gemini AI 응답 생성 중...] ---")
-    response = chat.send_message(prompt)
-    print("AI 응답 생성 성공!")
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }]
+    }
 
-    # 3. 텔레그램 메시지 전송
-    print("\n--- [텔레그램 메시지 발송 중...] ---")
-    url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
-    data = {"chat_id": chat_id, "text": response.text, "parse_mode": "Markdown"}
-    res = requests.post(url, data=data)
+    ai_res = requests.post(gemini_url, json=payload)
+    ai_json = ai_res.json()
 
-    if res.status_code == 200:
-        print("🎉 텔레그램 알림 발송 최종 성공!")
+    if ai_res.status_code != 200:
+        raise Exception(f"Gemini API 오류 ({ai_res.status_code}): {ai_json}")
+
+    # AI가 생성한 텍스트 추출
+    ai_message = ai_json['candidates'][0]['content']['parts'][0]['text']
+    print("AI 응답 생성 완료!")
+
+    # 3. 텔레그램 메시지 발송
+    print("\n--- [3. 텔레그램 알림 발송 중...] ---")
+    telegram_url = f"https://api.telegram.org/bot{telegram_token}/sendMessage"
+    tele_payload = {
+        "chat_id": chat_id,
+        "text": ai_message
+    }
+
+    tele_res = requests.post(telegram_url, json=tele_payload)
+    if tele_res.status_code == 200:
+        print("🎉 텔레그램 알림 발송 성공!")
     else:
-        print(f"❌ 텔레그램 전송 실패 (상태코드 {res.status_code}): {res.text}")
+        print(f"❌ 텔레그램 발송 실패 ({tele_res.status_code}): {tele_res.text}")
 
 except Exception as e:
-    print(f"\n❌ 실행 중 오류 발생: {e}")
+    print(f"\n❌ 오류 발생: {e}")
     raise e
